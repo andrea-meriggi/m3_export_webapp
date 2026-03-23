@@ -118,4 +118,7 @@ ORDER BY ts;
 
 Questa versione è compatibile con **Python 3.6**.
 Se sul server hai solo Python 3.6, usa questo pacchetto aggiornato.
+
+###### Per GIT
+
 # m3_export_webapp

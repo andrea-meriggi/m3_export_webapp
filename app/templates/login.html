@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Export Aggregated Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            margin: 0;
+            padding: 0;
+        }
+
+        .login-wrapper {
+            width: 420px;
+            margin: 80px auto;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .login-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .login-header h1 {
+            font-size: 22px;
+            margin: 0;
+        }
+
+        .logo {
+            height: 54px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            margin-top: 12px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            margin-top: 18px;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: #1f4e79;
+            color: #fff;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .error {
+            margin-top: 12px;
+            color: #b00020;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-header">
+            <h1>Accesso</h1>
+            <img src="/static/logo_aircare.png" class="logo" alt="Aircare logo">
+        </div>
+
+        <form method="POST" action="/login">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+
+            <button type="submit">Accedi</button>
+
+            {% if error %}
+                <div class="error">{{ error }}</div>
+            {% endif %}
+        </form>
+    </div>
+</body>
+</html>

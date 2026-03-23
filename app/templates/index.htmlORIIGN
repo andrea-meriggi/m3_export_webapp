@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Export Aggregated Data</title>
+    <img src="/static/logo_aircare.png" class="logo">
+</div>
+    <style>
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.logo{
+    height:60px;
+}
+h1{
+    margin:0;
+}
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f7f7f7;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .toolbar {
+            background: #ffffff;
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+
+        .toolbar label {
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .toolbar input,
+        .toolbar button {
+            margin-right: 15px;
+            margin-bottom: 10px;
+            padding: 6px 10px;
+        }
+
+        .table-container {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #dcdcdc;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #efefef;
+        }
+
+        tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .actions {
+            margin-top: 15px;
+        }
+
+        .actions button {
+            padding: 8px 14px;
+            margin-right: 10px;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #666;
+        }
+
+        #status {
+            margin-top: 10px;
+            color: #444;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Export dati aggregati</h1>
+
+    <form method="POST" action="/export" id="exportForm">
+        <div class="toolbar">
+            <div>
+                <label for="date_from">Data inizio</label>
+                <input type="datetime-local" id="date_from" name="date_from" required>
+
+                <label for="date_to">Data fine</label>
+                <input type="datetime-local" id="date_to" name="date_to" required>
+            </div>
+
+            <div>
+                <label for="filterInput">Filtro target/resource</label>
+                <input type="text" id="filterInput" placeholder="Scrivi per filtrare..." onkeyup="filterTable()">
+
+                <button type="button" onclick="selectAllRows()">Seleziona tutto</button>
+                <button type="button" onclick="deselectAllRows()">Deseleziona tutto</button>
+                <button type="button" onclick="selectFilteredRows()">Seleziona filtrati</button>
+                <button type="button" onclick="deselectFilteredRows()">Deseleziona filtrati</button>
+            </div>
+
+            <div id="status" class="small"></div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Seleziona</th>
+                        <th>Target</th>
+                        <th>Resource</th>
+                        <th>UM</th>
+                        <th>Tipologia</th>
+                    </tr>
+                </thead>
+                <tbody id="rowsTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="actions">
+            <button type="submit">Esporta Excel</button>
+        </div>
+    </form>
+
+    <script>
+        async function loadRows() {
+            const tbody = document.getElementById('rowsTableBody');
+            const status = document.getElementById('status');
+
+            status.innerText = 'Caricamento righe...';
+
+            try {
+                const res = await fetch('/api/index_rows');
+                const data = await res.json();
+
+                tbody.innerHTML = '';
+
+                data.forEach((row) => {
+                    const tr = document.createElement('tr');
+
+                    //const crescenteText = String(row.crescente) === '1' ? 'delta' : 'avg';
+		    const crescenteText = String(row.crescente) === '1' ? 'Crescente' : 'Oscillante';
+                    const safeUm = row.um ? row.um : '';
+
+                    tr.innerHTML = `
+                        <td>
+                            <input type="checkbox" name="selected_rows" value="${escapeHtml(row.target)}|${escapeHtml(row.resource)}" onchange="updateStatus()">
+                        </td>
+                        <td>${escapeHtml(row.target)}</td>
+                        <td>${escapeHtml(row.resource)}</td>
+                        <td>${escapeHtml(safeUm)}</td>
+                        <td>${escapeHtml(crescenteText)}</td>
+                    `;
+
+                    tbody.appendChild(tr);
+                });
+
+                updateStatus();
+            } catch (err) {
+                status.innerText = 'Errore nel caricamento righe';
+            }
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function filterTable() {
+            const filter = document.getElementById('filterInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#rowsTableBody tr');
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+
+            updateStatus();
+        }
+
+        function selectAllRows() {
+            document.querySelectorAll('input[name="selected_rows"]').forEach(cb => {
+                cb.checked = true;
+            });
+            updateStatus();
+        }
+
+        function deselectAllRows() {
+            document.querySelectorAll('input[name="selected_rows"]').forEach(cb => {
+                cb.checked = false;
+            });
+            updateStatus();
+        }
+
+        function selectFilteredRows() {
+            document.querySelectorAll('#rowsTableBody tr').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const cb = row.querySelector('input[name="selected_rows"]');
+                    if (cb) cb.checked = true;
+                }
+            });
+            updateStatus();
+        }
+
+        function deselectFilteredRows() {
+            document.querySelectorAll('#rowsTableBody tr').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const cb = row.querySelector('input[name="selected_rows"]');
+                    if (cb) cb.checked = false;
+                }
+            });
+            updateStatus();
+        }
+
+        function updateStatus() {
+            const allRows = document.querySelectorAll('#rowsTableBody tr');
+            const visibleRows = Array.from(allRows).filter(row => row.style.display !== 'none');
+            const selectedRows = document.querySelectorAll('input[name="selected_rows"]:checked');
+
+            document.getElementById('status').innerText =
+                'Righe visibili: ' + visibleRows.length + ' | Righe selezionate: ' + selectedRows.length;
+        }
+
+        window.onload = loadRows;
+    </script>
+</body>
+</html>

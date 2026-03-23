@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Export Aggregated Data</title>
+    <style>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            height: 60px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f7f7f7;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .toolbar {
+            background: #ffffff;
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+
+        .toolbar label {
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .toolbar input,
+        .toolbar select,
+        .toolbar button {
+            margin-right: 15px;
+            margin-bottom: 10px;
+            padding: 6px 10px;
+        }
+
+        .table-container {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            overflow-x: auto;
+            max-height: 600px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #dcdcdc;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #efefef;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        tr.selected-row {
+            background: #fff7d6 !important;
+        }
+
+        tr.selected-outside-filter {
+            background: #ffe9b3 !important;
+        }
+
+        .actions {
+            margin-top: 15px;
+        }
+
+        .actions button {
+            padding: 8px 14px;
+            margin-right: 10px;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #666;
+        }
+
+        #status {
+            margin-top: 10px;
+            color: #444;
+            font-size: 13px;
+        }
+
+        .disabled-field {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .legend {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .legend span {
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        .legend-box {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+            vertical-align: middle;
+            border: 1px solid #ccc;
+        }
+
+        .legend-selected {
+            background: #fff7d6;
+        }
+
+        .legend-outside {
+            background: #ffe9b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <h1>Export dati aggregati</h1>
+        </div>
+        <div style="display:flex; align-items:center; gap:15px;">
+            <span style="font-size:13px; color:#444;">Utente: {{ logged_user_name }}</span>
+            <a href="/logout" style="text-decoration:none; color:#1f4e79; font-weight:bold;">Logout</a>
+            <img src="/static/logo_aircare.png" class="logo" alt="Aircare logo">
+        </div>
+    </div>
+
+    <form method="POST" action="/export" id="exportForm">
+        <div class="toolbar">
+            <div>
+                <label for="periodPreset">Periodo</label>
+                <select id="periodPreset" name="periodPreset">
+                    <option value="current_month">Mese attuale</option>
+                    <option value="last_month">Ultimo mese</option>
+                    <option value="current_year">Anno attuale</option>
+                    <option value="last_year">Ultimo anno</option>
+                    <option value="custom">Custom</option>
+                </select>
+
+                <label for="date_from">Data inizio</label>
+                <input type="datetime-local" id="date_from" name="date_from" required>
+
+                <label for="date_to">Data fine</label>
+                <input type="datetime-local" id="date_to" name="date_to" required>
+
+                <label for="resolution">Aggregazione</label>
+                <select id="resolution" name="resolution">
+                    <option value="15m">15 minuti</option>
+                    <option value="hour">Oraria</option>
+                    <option value="day">Giornaliera</option>
+                    <option value="month">Mensile</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="targetFilter">Target</label>
+                <select id="targetFilter">
+                    <option value="">Tutti</option>
+                </select>
+
+                <label for="resourceFilter">Resource</label>
+                <select id="resourceFilter">
+                    <option value="">Tutte</option>
+                </select>
+
+                <label for="filterInput">Filtro libero</label>
+                <input type="text" id="filterInput" placeholder="Scrivi per filtrare...">
+
+                <button type="button" onclick="selectAllRows()">Seleziona tutto</button>
+                <button type="button" onclick="deselectAllRows()">Deseleziona tutto</button>
+                <button type="button" onclick="selectFilteredRows()">Seleziona filtrati</button>
+                <button type="button" onclick="deselectFilteredRows()">Deseleziona filtrati</button>
+            </div>
+
+            <div>
+                <label for="savedSelectionName">Nome selezione</label>
+                <input type="text" id="savedSelectionName" placeholder="Es. Cabina Savona">
+
+                <button type="button" onclick="saveCurrentSelection()">Salva selezione</button>
+
+                <label for="savedSelections">Selezioni salvate</label>
+                <select id="savedSelections">
+                    <option value="">Seleziona...</option>
+                </select>
+
+                <button type="button" onclick="loadSavedSelection()">Carica</button>
+                <button type="button" onclick="deleteSavedSelection()">Elimina</button>
+            </div>
+
+            <div id="status" class="small"></div>
+            <div class="legend">
+                <span><span class="legend-box legend-selected"></span>Selezionata</span>
+                <span><span class="legend-box legend-outside"></span>Selezionata fuori filtro</span>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Seleziona</th>
+                        <th>Target</th>
+                        <th>Resource</th>
+                        <th>UM</th>
+                        <th>Tipologia</th>
+                    </tr>
+                </thead>
+                <tbody id="rowsTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="actions">
+            <button type="submit">Esporta Excel</button>
+        </div>
+    </form>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+        let debounceTimer = null;
+        let selectedKeys = {};
+
+        const STORAGE_KEY = 'm3_export_saved_selections';
+
+        async function loadRows() {
+            const status = document.getElementById('status');
+            status.innerText = 'Caricamento righe...';
+
+            try {
+                const res = await fetch('/api/index_rows');
+                const rawData = await res.json();
+
+                allData = rawData.map(row => {
+                    const target = row.target || '';
+                    const resource = row.resource || '';
+                    const um = row.um || '';
+                    const tipologiaText = String(row.crescente) === '1' ? 'Crescente' : 'Oscillante';
+                    const searchText = normalizeText(
+                        target + ' ' + resource + ' ' + um + ' ' + tipologiaText
+                    );
+
+                    return {
+                        target: target,
+                        resource: resource,
+                        um: um,
+                        crescente: row.crescente,
+                        tipologiaText: tipologiaText,
+                        searchText: searchText,
+                        key: target + '|' + resource
+                    };
+                });
+
+                populateFilters(allData);
+                refreshSavedSelectionsDropdown();
+                applyFilters();
+            } catch (err) {
+                document.getElementById('rowsTableBody').innerHTML = '';
+                status.innerText = 'Errore nel caricamento righe';
+                console.error(err);
+            }
+        }
+
+        function populateFilters(data) {
+            const targetFilter = document.getElementById('targetFilter');
+            const resourceFilter = document.getElementById('resourceFilter');
+
+            const currentTarget = targetFilter.value;
+            const currentResource = resourceFilter.value;
+
+            const targets = [...new Set(data.map(row => row.target))].sort();
+            const resources = [...new Set(data.map(row => row.resource))].sort();
+
+            targetFilter.innerHTML = '<option value="">Tutti</option>';
+            resourceFilter.innerHTML = '<option value="">Tutte</option>';
+
+            targets.forEach(target => {
+                const opt = document.createElement('option');
+                opt.value = target;
+                opt.textContent = target;
+                targetFilter.appendChild(opt);
+            });
+
+            resources.forEach(resource => {
+                const opt = document.createElement('option');
+                opt.value = resource;
+                opt.textContent = resource;
+                resourceFilter.appendChild(opt);
+            });
+
+            targetFilter.value = currentTarget;
+            resourceFilter.value = currentResource;
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function normalizeText(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .toLowerCase()
+                .replace(/[_\s\-\/]+/g, '');
+        }
+
+        function formatDateTimeLocal(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        function setDateRangeByPreset() {
+            const preset = document.getElementById('periodPreset').value;
+            const dateFrom = document.getElementById('date_from');
+            const dateTo = document.getElementById('date_to');
+
+            const now = new Date();
+            let fromDate = null;
+            let toDate = null;
+
+            if (preset === 'current_month') {
+                fromDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+                toDate = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+            } else if (preset === 'last_month') {
+                fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+                toDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            } else if (preset === 'current_year') {
+                fromDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+                toDate = new Date(now.getFullYear() + 1, 0, 1, 0, 0, 0, 0);
+            } else if (preset === 'last_year') {
+                fromDate = new Date(now.getFullYear() - 1, 0, 1, 0, 0, 0, 0);
+                toDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+            }
+
+            if (preset === 'custom') {
+                dateFrom.disabled = false;
+                dateTo.disabled = false;
+                dateFrom.classList.remove('disabled-field');
+                dateTo.classList.remove('disabled-field');
+            } else {
+                dateFrom.value = formatDateTimeLocal(fromDate);
+                dateTo.value = formatDateTimeLocal(toDate);
+                dateFrom.disabled = true;
+                dateTo.disabled = true;
+                dateFrom.classList.add('disabled-field');
+                dateTo.classList.add('disabled-field');
+            }
+        }
+
+        function enableDatesBeforeSubmit() {
+            const dateFrom = document.getElementById('date_from');
+            const dateTo = document.getElementById('date_to');
+
+            if (dateFrom.disabled) dateFrom.disabled = false;
+            if (dateTo.disabled) dateTo.disabled = false;
+        }
+
+        function syncHiddenSelectedRows() {
+            const form = document.getElementById('exportForm');
+
+            const oldHidden = form.querySelectorAll('input[data-hidden-selected="1"]');
+            oldHidden.forEach(el => el.remove());
+
+            Object.keys(selectedKeys).forEach(key => {
+                if (selectedKeys[key]) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'selected_rows';
+                    input.value = key;
+                    input.setAttribute('data-hidden-selected', '1');
+                    form.appendChild(input);
+                }
+            });
+        }
+
+        function getSavedSelections() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function setSavedSelections(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function refreshSavedSelectionsDropdown() {
+            const dropdown = document.getElementById('savedSelections');
+            const saved = getSavedSelections();
+
+            dropdown.innerHTML = '<option value="">Seleziona...</option>';
+
+            Object.keys(saved).sort().forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                dropdown.appendChild(opt);
+            });
+        }
+
+        function saveCurrentSelection() {
+            const name = (document.getElementById('savedSelectionName').value || '').trim();
+
+            if (!name) {
+                alert('Inserire un nome per la selezione.');
+                return;
+            }
+
+            const keys = Object.keys(selectedKeys).filter(k => selectedKeys[k]);
+
+            if (!keys.length) {
+                alert('Nessuna risorsa selezionata da salvare.');
+                return;
+            }
+
+            const saved = getSavedSelections();
+            saved[name] = keys;
+            setSavedSelections(saved);
+            refreshSavedSelectionsDropdown();
+            document.getElementById('savedSelections').value = name;
+
+            alert('Selezione salvata.');
+        }
+
+        function loadSavedSelection() {
+            const name = document.getElementById('savedSelections').value;
+            if (!name) {
+                alert('Selezionare una configurazione salvata.');
+                return;
+            }
+
+            const saved = getSavedSelections();
+            const keys = saved[name] || [];
+
+            selectedKeys = {};
+            keys.forEach(k => {
+                selectedKeys[k] = true;
+            });
+
+            applyFilters();
+        }
+
+        function deleteSavedSelection() {
+            const name = document.getElementById('savedSelections').value;
+            if (!name) {
+                alert('Selezionare una configurazione da eliminare.');
+                return;
+            }
+
+            const saved = getSavedSelections();
+            delete saved[name];
+            setSavedSelections(saved);
+            refreshSavedSelectionsDropdown();
+
+            alert('Selezione eliminata.');
+        }
+
+        function applyFilters() {
+            const targetValue = (document.getElementById('targetFilter').value || '').toLowerCase();
+            const resourceValue = (document.getElementById('resourceFilter').value || '').toLowerCase();
+            const textFilter = normalizeText(document.getElementById('filterInput').value || '');
+
+            filteredData = allData.filter(row => {
+                const matchTarget = !targetValue || row.target.toLowerCase() === targetValue;
+                const matchResource = !resourceValue || row.resource.toLowerCase() === resourceValue;
+                const matchText = !textFilter || row.searchText.includes(textFilter);
+
+                const selected = !!selectedKeys[row.key];
+
+                return (matchTarget && matchResource && matchText) || selected;
+            });
+
+            renderTable(filteredData, {
+                targetValue: targetValue,
+                resourceValue: resourceValue,
+                textFilter: textFilter
+            });
+        }
+
+        function rowMatchesCurrentFilter(row, filters) {
+            const matchTarget = !filters.targetValue || row.target.toLowerCase() === filters.targetValue;
+            const matchResource = !filters.resourceValue || row.resource.toLowerCase() === filters.resourceValue;
+            const matchText = !filters.textFilter || row.searchText.includes(filters.textFilter);
+            return matchTarget && matchResource && matchText;
+        }
+
+        function renderTable(data, filters) {
+            const tbody = document.getElementById('rowsTableBody');
+            let html = '';
+
+            data.forEach(row => {
+                const checked = selectedKeys[row.key] ? 'checked' : '';
+                const selected = !!selectedKeys[row.key];
+                const insideFilter = filters ? rowMatchesCurrentFilter(row, filters) : true;
+
+                let trClass = '';
+                if (selected && insideFilter) {
+                    trClass = 'selected-row';
+                } else if (selected && !insideFilter) {
+                    trClass = 'selected-outside-filter';
+                }
+
+                html += `
+                    <tr class="${trClass}">
+                        <td>
+                            <input type="checkbox" name="selected_rows" value="${escapeHtml(row.key)}" ${checked} onchange="toggleSelection(this)">
+                        </td>
+                        <td>${escapeHtml(row.target)}</td>
+                        <td>${escapeHtml(row.resource)}</td>
+                        <td>${escapeHtml(row.um)}</td>
+                        <td>${escapeHtml(row.tipologiaText)}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            updateStatus(filters);
+        }
+
+        function toggleSelection(cb) {
+            const key = cb.value;
+            if (cb.checked) {
+                selectedKeys[key] = true;
+            } else {
+                delete selectedKeys[key];
+            }
+            applyFilters();
+        }
+
+        function selectAllRows() {
+            allData.forEach(row => {
+                selectedKeys[row.key] = true;
+            });
+            applyFilters();
+        }
+
+        function deselectAllRows() {
+            selectedKeys = {};
+            applyFilters();
+        }
+
+        function selectFilteredRows() {
+            const targetValue = (document.getElementById('targetFilter').value || '').toLowerCase();
+            const resourceValue = (document.getElementById('resourceFilter').value || '').toLowerCase();
+            const textFilter = normalizeText(document.getElementById('filterInput').value || '');
+
+            allData.forEach(row => {
+                const matchTarget = !targetValue || row.target.toLowerCase() === targetValue;
+                const matchResource = !resourceValue || row.resource.toLowerCase() === resourceValue;
+                const matchText = !textFilter || row.searchText.includes(textFilter);
+
+                if (matchTarget && matchResource && matchText) {
+                    selectedKeys[row.key] = true;
+                }
+            });
+
+            applyFilters();
+        }
+
+        function deselectFilteredRows() {
+            const targetValue = (document.getElementById('targetFilter').value || '').toLowerCase();
+            const resourceValue = (document.getElementById('resourceFilter').value || '').toLowerCase();
+            const textFilter = normalizeText(document.getElementById('filterInput').value || '');
+
+            allData.forEach(row => {
+                const matchTarget = !targetValue || row.target.toLowerCase() === targetValue;
+                const matchResource = !resourceValue || row.resource.toLowerCase() === resourceValue;
+                const matchText = !textFilter || row.searchText.includes(textFilter);
+
+                if (matchTarget && matchResource && matchText) {
+                    delete selectedKeys[row.key];
+                }
+            });
+
+            applyFilters();
+        }
+
+        function updateStatus(filters) {
+            let visibleCount = filteredData.length;
+            let selectedCount = Object.keys(selectedKeys).length;
+
+            let selectedOutsideFilter = 0;
+            if (filters) {
+                allData.forEach(row => {
+                    if (selectedKeys[row.key] && !rowMatchesCurrentFilter(row, filters)) {
+                        selectedOutsideFilter += 1;
+                    }
+                });
+            }
+
+            document.getElementById('status').innerText =
+                'Righe mostrate: ' + visibleCount +
+                ' | Righe selezionate: ' + selectedCount +
+                ' | Selezionate fuori filtro: ' + selectedOutsideFilter;
+        }
+
+        function bindEvents() {
+            document.getElementById('targetFilter').addEventListener('change', applyFilters);
+            document.getElementById('resourceFilter').addEventListener('change', applyFilters);
+
+            document.getElementById('filterInput').addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(applyFilters, 180);
+            });
+
+            document.getElementById('periodPreset').addEventListener('change', setDateRangeByPreset);
+
+            document.getElementById('exportForm').addEventListener('submit', function() {
+                enableDatesBeforeSubmit();
+                syncHiddenSelectedRows();
+            });
+        }
+
+        window.onload = function() {
+            bindEvents();
+            setDateRangeByPreset();
+            refreshSavedSelectionsDropdown();
+            loadRows();
+        };
+    </script>
+</body>
+</html>

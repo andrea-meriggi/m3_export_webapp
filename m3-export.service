@@ -1,0 +1,14 @@
+[Unit]
+Description=M3 Export Web App
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/m3_export_webapp
+ExecStart=/opt/m3_export_webapp/run.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
