@@ -45,6 +45,62 @@
             padding: 6px 10px;
         }
 
+        .filter-blocks {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .checklist-block {
+            width: 280px;
+        }
+
+        .checklist-block label {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .checklist-search {
+            width: 250px;
+            margin-bottom: 8px;
+        }
+
+        .checklist-box {
+            border: 1px solid #ccc;
+            background: #fff;
+            min-height: 180px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .checklist-item {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .checklist-item.hidden-item {
+            display: none;
+        }
+
+        .checklist-actions {
+            margin-top: 6px;
+        }
+
+        .checklist-actions button {
+            margin-right: 6px;
+            margin-bottom: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .free-filter-block {
+            min-width: 340px;
+        }
+
         .table-container {
             background: #ffffff;
             border: 1px solid #ddd;
@@ -178,27 +234,47 @@
                 </select>
             </div>
 
-            <div>
-                <label for="targetFilter">Target</label>
-                <select id="targetFilter">
-                    <option value="">Tutti</option>
-                </select>
+            <div class="filter-blocks">
+                <div class="checklist-block">
+                    <label for="targetSearch">Cerca Target</label>
+                    <input type="text" id="targetSearch" class="checklist-search" placeholder="Scrivi uno o più target...">
 
-                <label for="resourceFilter">Resource</label>
-                <select id="resourceFilter">
-                    <option value="">Tutte</option>
-                </select>
+                    <label>Target</label>
+                    <div id="targetChecklist" class="checklist-box"></div>
 
-                <label for="filterInput">Filtro libero</label>
-                <input type="text" id="filterInput" placeholder="Scrivi per filtrare...">
+                    <div class="checklist-actions">
+                        <button type="button" onclick="selectAllVisibleChecklist('targetChecklist')">Seleziona target visibili</button>
+                        <button type="button" onclick="clearAllChecklist('targetChecklist')">Azzera target</button>
+                    </div>
+                </div>
 
-                <button type="button" onclick="selectAllRows()">Seleziona tutto</button>
-                <button type="button" onclick="deselectAllRows()">Deseleziona tutto</button>
-                <button type="button" onclick="selectFilteredRows()">Seleziona filtrati</button>
-                <button type="button" onclick="deselectFilteredRows()">Deseleziona filtrati</button>
+                <div class="checklist-block">
+                    <label for="resourceSearch">Cerca Resource</label>
+                    <input type="text" id="resourceSearch" class="checklist-search" placeholder="Scrivi una o più resource...">
+
+                    <label>Resource</label>
+                    <div id="resourceChecklist" class="checklist-box"></div>
+
+                    <div class="checklist-actions">
+                        <button type="button" onclick="selectAllVisibleChecklist('resourceChecklist')">Seleziona resource visibili</button>
+                        <button type="button" onclick="clearAllChecklist('resourceChecklist')">Azzera resource</button>
+                    </div>
+                </div>
+
+                <div class="free-filter-block">
+                    <label for="filterInput">Filtro libero</label>
+                    <input type="text" id="filterInput" placeholder="Scrivi per filtrare..." style="width:300px;">
+
+                    <div style="margin-top:12px;">
+                        <button type="button" onclick="selectAllRows()">Seleziona tutto</button>
+                        <button type="button" onclick="deselectAllRows()">Deseleziona tutto</button>
+                        <button type="button" onclick="selectFilteredRows()">Seleziona filtrati</button>
+                        <button type="button" onclick="deselectFilteredRows()">Deseleziona filtrati</button>
+                    </div>
+                </div>
             </div>
 
-            <div>
+            <div style="margin-top:10px;">
                 <label for="savedSelectionName">Nome selezione</label>
                 <input type="text" id="savedSelectionName" placeholder="Es. Cabina Savona">
 
@@ -246,8 +322,6 @@
         let debounceTimer = null;
         let selectedKeys = {};
 
-        const STORAGE_KEY = 'm3_export_saved_selections';
-
         async function loadRows() {
             const status = document.getElementById('status');
             status.innerText = 'Caricamento righe...';
@@ -276,8 +350,10 @@
                     };
                 });
 
-                populateFilters(allData);
-                refreshSavedSelectionsDropdown();
+                renderChecklist('targetChecklist', [...new Set(allData.map(row => row.target))].sort(), 'target');
+                renderChecklist('resourceChecklist', [...new Set(allData.map(row => row.resource))].sort(), 'resource');
+
+                await refreshSavedSelectionsDropdown();
                 applyFilters();
             } catch (err) {
                 document.getElementById('rowsTableBody').innerHTML = '';
@@ -286,35 +362,63 @@
             }
         }
 
-        function populateFilters(data) {
-            const targetFilter = document.getElementById('targetFilter');
-            const resourceFilter = document.getElementById('resourceFilter');
+        function renderChecklist(containerId, items, type) {
+            const container = document.getElementById(containerId);
+            let html = '';
 
-            const currentTarget = targetFilter.value;
-            const currentResource = resourceFilter.value;
-
-            const targets = [...new Set(data.map(row => row.target))].sort();
-            const resources = [...new Set(data.map(row => row.resource))].sort();
-
-            targetFilter.innerHTML = '<option value="">Tutti</option>';
-            resourceFilter.innerHTML = '<option value="">Tutte</option>';
-
-            targets.forEach(target => {
-                const opt = document.createElement('option');
-                opt.value = target;
-                opt.textContent = target;
-                targetFilter.appendChild(opt);
+            items.forEach(item => {
+                const itemEscaped = escapeHtml(item);
+                html += `
+                    <label class="checklist-item" data-value="${itemEscaped}">
+                        <input type="checkbox" data-type="${type}" value="${itemEscaped}">
+                        ${itemEscaped}
+                    </label>
+                `;
             });
 
-            resources.forEach(resource => {
-                const opt = document.createElement('option');
-                opt.value = resource;
-                opt.textContent = resource;
-                resourceFilter.appendChild(opt);
-            });
+            container.innerHTML = html;
+        }
 
-            targetFilter.value = currentTarget;
-            resourceFilter.value = currentResource;
+        function getCheckedChecklistValues(containerId) {
+            const container = document.getElementById(containerId);
+            return Array.from(container.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.value.toLowerCase());
+        }
+
+        function selectAllVisibleChecklist(containerId) {
+            const container = document.getElementById(containerId);
+            Array.from(container.querySelectorAll('.checklist-item')).forEach(label => {
+                if (!label.classList.contains('hidden-item')) {
+                    const cb = label.querySelector('input[type="checkbox"]');
+                    if (cb) cb.checked = true;
+                }
+            });
+            applyFilters();
+        }
+
+        function clearAllChecklist(containerId) {
+            const container = document.getElementById(containerId);
+            Array.from(container.querySelectorAll('input[type="checkbox"]')).forEach(cb => {
+                cb.checked = false;
+            });
+            applyFilters();
+        }
+
+        function filterChecklist(containerId, searchId) {
+            const container = document.getElementById(containerId);
+            const rawInput = document.getElementById(searchId).value || '';
+
+            const terms = rawInput
+                .toLowerCase()
+                .split(/[\s,;]+/)
+                .map(t => normalizeText(t))
+                .filter(t => t.length > 0);
+
+            Array.from(container.querySelectorAll('.checklist-item')).forEach(label => {
+                const itemText = normalizeText(label.getAttribute('data-value') || '');
+                const match = terms.length === 0 || terms.some(term => itemText.includes(term));
+                label.classList.toggle('hidden-item', !match);
+            });
         }
 
         function escapeHtml(text) {
@@ -408,34 +512,27 @@
             });
         }
 
-        function getSavedSelections() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                return raw ? JSON.parse(raw) : {};
-            } catch (e) {
-                return {};
-            }
+        async function fetchSavedSelections() {
+            const res = await fetch('/api/saved_selections');
+            if (!res.ok) throw new Error('Errore caricamento selezioni salvate');
+            return await res.json();
         }
 
-        function setSavedSelections(data) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        }
-
-        function refreshSavedSelectionsDropdown() {
+        async function refreshSavedSelectionsDropdown() {
             const dropdown = document.getElementById('savedSelections');
-            const saved = getSavedSelections();
+            const saved = await fetchSavedSelections();
 
             dropdown.innerHTML = '<option value="">Seleziona...</option>';
 
-            Object.keys(saved).sort().forEach(name => {
+            saved.forEach(item => {
                 const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
+                opt.value = item.name;
+                opt.textContent = item.name;
                 dropdown.appendChild(opt);
             });
         }
 
-        function saveCurrentSelection() {
+        async function saveCurrentSelection() {
             const name = (document.getElementById('savedSelectionName').value || '').trim();
 
             if (!name) {
@@ -450,56 +547,75 @@
                 return;
             }
 
-            const saved = getSavedSelections();
-            saved[name] = keys;
-            setSavedSelections(saved);
-            refreshSavedSelectionsDropdown();
-            document.getElementById('savedSelections').value = name;
+            const res = await fetch('/api/saved_selections', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name, keys: keys})
+            });
 
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert(data.error || 'Errore salvataggio selezione.');
+                return;
+            }
+
+            await refreshSavedSelectionsDropdown();
+            document.getElementById('savedSelections').value = name;
             alert('Selezione salvata.');
         }
 
-        function loadSavedSelection() {
+        async function loadSavedSelection() {
             const name = document.getElementById('savedSelections').value;
             if (!name) {
                 alert('Selezionare una configurazione salvata.');
                 return;
             }
 
-            const saved = getSavedSelections();
-            const keys = saved[name] || [];
+            const saved = await fetchSavedSelections();
+            const item = saved.find(x => x.name === name);
+
+            if (!item) {
+                alert('Selezione non trovata.');
+                return;
+            }
 
             selectedKeys = {};
-            keys.forEach(k => {
+            (item.keys || []).forEach(k => {
                 selectedKeys[k] = true;
             });
 
             applyFilters();
         }
 
-        function deleteSavedSelection() {
+        async function deleteSavedSelection() {
             const name = document.getElementById('savedSelections').value;
             if (!name) {
                 alert('Selezionare una configurazione da eliminare.');
                 return;
             }
 
-            const saved = getSavedSelections();
-            delete saved[name];
-            setSavedSelections(saved);
-            refreshSavedSelectionsDropdown();
+            const res = await fetch('/api/saved_selections/' + encodeURIComponent(name), {
+                method: 'DELETE'
+            });
 
+            if (!res.ok) {
+                alert('Errore eliminazione selezione.');
+                return;
+            }
+
+            await refreshSavedSelectionsDropdown();
             alert('Selezione eliminata.');
         }
 
         function applyFilters() {
-            const targetValue = (document.getElementById('targetFilter').value || '').toLowerCase();
-            const resourceValue = (document.getElementById('resourceFilter').value || '').toLowerCase();
+            const selectedTargets = getCheckedChecklistValues('targetChecklist');
+            const selectedResources = getCheckedChecklistValues('resourceChecklist');
             const textFilter = normalizeText(document.getElementById('filterInput').value || '');
 
             filteredData = allData.filter(row => {
-                const matchTarget = !targetValue || row.target.toLowerCase() === targetValue;
-                const matchResource = !resourceValue || row.resource.toLowerCase() === resourceValue;
+                const matchTarget = selectedTargets.length === 0 || selectedTargets.includes(row.target.toLowerCase());
+                const matchResource = selectedResources.length === 0 || selectedResources.includes(row.resource.toLowerCase());
                 const matchText = !textFilter || row.searchText.includes(textFilter);
 
                 const selected = !!selectedKeys[row.key];
@@ -508,15 +624,15 @@
             });
 
             renderTable(filteredData, {
-                targetValue: targetValue,
-                resourceValue: resourceValue,
+                selectedTargets: selectedTargets,
+                selectedResources: selectedResources,
                 textFilter: textFilter
             });
         }
 
         function rowMatchesCurrentFilter(row, filters) {
-            const matchTarget = !filters.targetValue || row.target.toLowerCase() === filters.targetValue;
-            const matchResource = !filters.resourceValue || row.resource.toLowerCase() === filters.resourceValue;
+            const matchTarget = filters.selectedTargets.length === 0 || filters.selectedTargets.includes(row.target.toLowerCase());
+            const matchResource = filters.selectedResources.length === 0 || filters.selectedResources.includes(row.resource.toLowerCase());
             const matchText = !filters.textFilter || row.searchText.includes(filters.textFilter);
             return matchTarget && matchResource && matchText;
         }
@@ -540,7 +656,7 @@
                 html += `
                     <tr class="${trClass}">
                         <td>
-                            <input type="checkbox" name="selected_rows" value="${escapeHtml(row.key)}" ${checked} onchange="toggleSelection(this)">
+                            <input type="checkbox" value="${escapeHtml(row.key)}" ${checked} onchange="toggleSelection(this)">
                         </td>
                         <td>${escapeHtml(row.target)}</td>
                         <td>${escapeHtml(row.resource)}</td>
@@ -577,13 +693,13 @@
         }
 
         function selectFilteredRows() {
-            const targetValue = (document.getElementById('targetFilter').value || '').toLowerCase();
-            const resourceValue = (document.getElementById('resourceFilter').value || '').toLowerCase();
+            const selectedTargets = getCheckedChecklistValues('targetChecklist');
+            const selectedResources = getCheckedChecklistValues('resourceChecklist');
             const textFilter = normalizeText(document.getElementById('filterInput').value || '');
 
             allData.forEach(row => {
-                const matchTarget = !targetValue || row.target.toLowerCase() === targetValue;
-                const matchResource = !resourceValue || row.resource.toLowerCase() === resourceValue;
+                const matchTarget = selectedTargets.length === 0 || selectedTargets.includes(row.target.toLowerCase());
+                const matchResource = selectedResources.length === 0 || selectedResources.includes(row.resource.toLowerCase());
                 const matchText = !textFilter || row.searchText.includes(textFilter);
 
                 if (matchTarget && matchResource && matchText) {
@@ -595,13 +711,13 @@
         }
 
         function deselectFilteredRows() {
-            const targetValue = (document.getElementById('targetFilter').value || '').toLowerCase();
-            const resourceValue = (document.getElementById('resourceFilter').value || '').toLowerCase();
+            const selectedTargets = getCheckedChecklistValues('targetChecklist');
+            const selectedResources = getCheckedChecklistValues('resourceChecklist');
             const textFilter = normalizeText(document.getElementById('filterInput').value || '');
 
             allData.forEach(row => {
-                const matchTarget = !targetValue || row.target.toLowerCase() === targetValue;
-                const matchResource = !resourceValue || row.resource.toLowerCase() === resourceValue;
+                const matchTarget = selectedTargets.length === 0 || selectedTargets.includes(row.target.toLowerCase());
+                const matchResource = selectedResources.length === 0 || selectedResources.includes(row.resource.toLowerCase());
                 const matchText = !textFilter || row.searchText.includes(textFilter);
 
                 if (matchTarget && matchResource && matchText) {
@@ -632,8 +748,25 @@
         }
 
         function bindEvents() {
-            document.getElementById('targetFilter').addEventListener('change', applyFilters);
-            document.getElementById('resourceFilter').addEventListener('change', applyFilters);
+            document.getElementById('targetSearch').addEventListener('input', function() {
+                filterChecklist('targetChecklist', 'targetSearch');
+            });
+
+            document.getElementById('resourceSearch').addEventListener('input', function() {
+                filterChecklist('resourceChecklist', 'resourceSearch');
+            });
+
+            document.getElementById('targetChecklist').addEventListener('change', function(e) {
+                if (e.target && e.target.type === 'checkbox') {
+                    applyFilters();
+                }
+            });
+
+            document.getElementById('resourceChecklist').addEventListener('change', function(e) {
+                if (e.target && e.target.type === 'checkbox') {
+                    applyFilters();
+                }
+            });
 
             document.getElementById('filterInput').addEventListener('input', function() {
                 clearTimeout(debounceTimer);
@@ -648,11 +781,10 @@
             });
         }
 
-        window.onload = function() {
+        window.onload = async function() {
             bindEvents();
             setDateRangeByPreset();
-            refreshSavedSelectionsDropdown();
-            loadRows();
+            await loadRows();
         };
     </script>
 </body>

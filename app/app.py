@@ -1,5 +1,7 @@
 import io
+import json
 import os
+import re
 from datetime import datetime
 from functools import wraps
 
@@ -14,6 +16,9 @@ from passlib.hash import bcrypt as passlib_bcrypt
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "change-me-now")
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+SELECTIONS_DIR = os.path.join(BASE_DIR, "storage", "selections")
+
 DB_SCHEMA_INDEX = os.getenv("DB_SCHEMA_INDEX", "m3data")
 DB_TABLE_INDEX = os.getenv("DB_TABLE_INDEX", "aggregation_index")
 DB_SCHEMA_DATA = os.getenv("DB_SCHEMA_DATA", "aggregatedData")
@@ -23,6 +28,80 @@ MYSQL_TABLE_USERS = os.getenv("MYSQL_TABLE_USERS", "users")
 APP_TIMEZONE = os.getenv("APP_TIMEZONE", "Europe/Rome")
 LOCAL_TZ = pytz.timezone(APP_TIMEZONE)
 UTC_TZ = pytz.utc
+
+
+def ensure_storage_dirs():
+    os.makedirs(SELECTIONS_DIR, exist_ok=True)
+
+
+def sanitize_filename(name):
+    name = name.strip()
+    name = re.sub(r'[\\/*?:"<>|]', "_", name)
+    name = re.sub(r"\s+", " ", name).strip()
+    if not name:
+        name = "selezione"
+    return name
+
+
+def get_user_selection_dir(user_id):
+    ensure_storage_dirs()
+    user_dir = os.path.join(SELECTIONS_DIR, str(user_id))
+    os.makedirs(user_dir, exist_ok=True)
+    return user_dir
+
+
+def get_user_selection_filepath(user_id, selection_name):
+    safe_name = sanitize_filename(selection_name)
+    return os.path.join(get_user_selection_dir(user_id), safe_name + ".json")
+
+
+def load_user_selections(user_id):
+    user_dir = get_user_selection_dir(user_id)
+    result = {}
+
+    try:
+        for filename in os.listdir(user_dir):
+            if not filename.lower().endswith(".json"):
+                continue
+
+            filepath = os.path.join(user_dir, filename)
+            selection_name = filename[:-5]
+
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                if isinstance(data, dict):
+                    keys = data.get("keys", [])
+                elif isinstance(data, list):
+                    keys = data
+                else:
+                    keys = []
+
+                if isinstance(keys, list):
+                    result[selection_name] = keys
+            except Exception:
+                continue
+    except Exception:
+        return {}
+
+    return result
+
+
+def save_user_selection(user_id, selection_name, keys):
+    filepath = get_user_selection_filepath(user_id, selection_name)
+    payload = {
+        "name": selection_name,
+        "keys": keys
+    }
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+
+def delete_user_selection(user_id, selection_name):
+    filepath = get_user_selection_filepath(user_id, selection_name)
+    if os.path.exists(filepath):
+        os.remove(filepath)
 
 
 def get_pg_connection():
@@ -176,6 +255,73 @@ def api_index_rows():
     return jsonify(result)
 
 
+@app.route("/api/saved_selections", methods=["GET"])
+@login_required
+def get_saved_selections():
+    user_id = session["user_id"]
+    selections = load_user_selections(user_id)
+
+    result = []
+    for name in sorted(selections.keys()):
+        keys = selections.get(name, [])
+        if not isinstance(keys, list):
+            keys = []
+        result.append({
+            "name": name,
+            "keys": keys
+        })
+
+    return jsonify(result)
+
+
+@app.route("/api/saved_selections", methods=["POST"])
+@login_required
+def save_selection():
+    try:
+        user_id = session["user_id"]
+        payload = request.get_json(silent=True) or {}
+
+        name = (payload.get("name") or "").strip()
+        keys = payload.get("keys") or []
+
+        if not name:
+            return jsonify({"error": "Nome selezione obbligatorio"}), 400
+
+        if not isinstance(keys, list) or not keys:
+            return jsonify({"error": "Nessuna risorsa selezionata"}), 400
+
+        cleaned_keys = []
+        seen = set()
+
+        for item in keys:
+            if isinstance(item, str) and "|" in item and item not in seen:
+                seen.add(item)
+                cleaned_keys.append(item)
+
+        if not cleaned_keys:
+            return jsonify({"error": "Selezione non valida"}), 400
+
+        save_user_selection(user_id, name, cleaned_keys)
+        return jsonify({"ok": True})
+
+    except Exception as e:
+        app.logger.exception("Errore salvataggio selezione")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/saved_selections/<selection_name>", methods=["DELETE"])
+@login_required
+def delete_selection(selection_name):
+    user_id = session["user_id"]
+
+    try:
+        delete_user_selection(user_id, selection_name)
+        return jsonify({"ok": True})
+    except Exception as e:
+        app.logger.exception("Errore eliminazione selezione")
+        return jsonify({"error": str(e)}), 500
+
+
 def get_bucket_sql(resolution):
     if resolution == "hour":
         return "extract(epoch from date_trunc('hour', timezone('Europe/Rome', to_timestamp(ts))))::bigint"
@@ -248,7 +394,7 @@ def export_excel():
         cur.execute(sql_meta, (target, resource))
         row = cur.fetchone()
         if row:
-            meta_key = (row[0], row[1], row[3])  # target, resource, table_uuid
+            meta_key = (row[0], row[1], row[3])
             if meta_key not in seen_meta:
                 seen_meta.add(meta_key)
                 metadata_rows.append(row)
@@ -363,6 +509,7 @@ def export_excel():
 
 
 if __name__ == "__main__":
+    ensure_storage_dirs()
     app.run(
         host=os.getenv("APP_HOST", "0.0.0.0"),
         port=int(os.getenv("APP_PORT", "8080")),
