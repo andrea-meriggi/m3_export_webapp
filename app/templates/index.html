@@ -2,111 +2,305 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Export Aggregated Data</title>
+    <title>Export dati aggregati</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f7fa;
+            color: #1f2937;
+        }
+
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 30px;
         }
 
         .logo {
-            height: 60px;
+            height: 58px;
         }
 
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background: #f7f7f7;
-        }
-
-        h1 {
-            margin: 0;
-        }
-
-        .toolbar {
+        .topbar {
             background: #ffffff;
-            padding: 15px;
-            border: 1px solid #ddd;
-            margin-bottom: 15px;
+            border: 1px solid #dbe2ea;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
         }
 
-        .toolbar label {
-            margin-right: 8px;
-            font-weight: bold;
-        }
-
-        .toolbar input,
-        .toolbar select,
-        .toolbar button {
-            margin-right: 15px;
-            margin-bottom: 10px;
-            padding: 6px 10px;
-        }
-
-        .filter-blocks {
+        .topbar-row {
             display: flex;
-            gap: 20px;
-            align-items: flex-start;
             flex-wrap: wrap;
-            margin-top: 10px;
+            gap: 18px;
+            align-items: flex-end;
+            margin-bottom: 12px;
         }
 
-        .checklist-block {
-            width: 280px;
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
-        .checklist-block label {
-            display: block;
-            margin-bottom: 6px;
+        .field-group label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #374151;
         }
 
-        .checklist-search {
-            width: 250px;
-            margin-bottom: 8px;
+        input[type="text"],
+        input[type="datetime-local"],
+        select,
+        button {
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="datetime-local"],
+        select {
+            padding: 9px 10px;
+            border: 1px solid #cfd8e3;
+            border-radius: 8px;
+            background: #fff;
+            min-width: 160px;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus,
+        input[type="datetime-local"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #5b8def;
+            box-shadow: 0 0 0 3px rgba(91,141,239,0.12);
+        }
+
+        .disabled-field {
+            background: #eef2f7;
+            color: #6b7280;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 320px;
+            gap: 18px;
+            margin-top: 8px;
+        }
+
+        .filter-card {
+            background: #ffffff;
+            border: 1px solid #dbe2ea;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+
+        .filter-card h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+        }
+
+        .search-box {
+            width: 100%;
+            margin-bottom: 10px;
         }
 
         .checklist-box {
-            border: 1px solid #ccc;
-            background: #fff;
-            min-height: 180px;
-            max-height: 220px;
+            border: 1px solid #d7dee8;
+            border-radius: 10px;
+            background: #fbfcfe;
+            min-height: 280px;
+            max-height: 320px;
             overflow-y: auto;
-            padding: 8px;
+            padding: 10px;
         }
 
         .checklist-item {
-            display: block;
-            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 4px;
+            border-radius: 6px;
             font-size: 13px;
+        }
+
+        .checklist-item:hover {
+            background: #eef4ff;
         }
 
         .checklist-item.hidden-item {
             display: none;
         }
 
+        .checklist-item input {
+            margin: 0;
+        }
+
         .checklist-actions {
-            margin-top: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
         }
 
-        .checklist-actions button {
-            margin-right: 6px;
-            margin-bottom: 4px;
-            padding: 4px 8px;
+        .side-card {
+            background: #ffffff;
+            border: 1px solid #dbe2ea;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .side-card h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        button {
+            padding: 9px 12px;
+            border: 1px solid #c9d3df;
+            border-radius: 8px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: 0.15s ease;
+        }
+
+        button:hover {
+            background: #f2f6fb;
+        }
+
+        .btn-primary {
+            background: #2157d5;
+            color: white;
+            border-color: #2157d5;
+        }
+
+        .btn-primary:hover {
+            background: #1848b4;
+        }
+
+        .save-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: flex-end;
+            margin-top: 14px;
+            background: #ffffff;
+            border: 1px solid #dbe2ea;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+
+        .save-row .field-group {
+            min-width: 220px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.4fr;
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .summary-card {
+            background: #ffffff;
+            border: 1px solid #dbe2ea;
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+
+        .summary-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .summary-box {
+            border: 1px solid #e5eaf0;
+            border-radius: 8px;
+            background: #fbfcfe;
+            min-height: 110px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        .summary-item {
+            padding: 4px 0;
+            border-bottom: 1px solid #eef2f7;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .empty-note {
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        #status {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #4b5563;
+            font-weight: 600;
+        }
+
+        .legend {
+            margin-top: 8px;
             font-size: 12px;
+            color: #6b7280;
         }
 
-        .free-filter-block {
-            min-width: 340px;
+        .legend span {
+            display: inline-block;
+            margin-right: 16px;
+        }
+
+        .legend-box {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+            vertical-align: middle;
+            border: 1px solid #ccc;
+        }
+
+        .legend-selected {
+            background: #fff4c7;
+        }
+
+        .legend-outside {
+            background: #ffe2a8;
         }
 
         .table-container {
             background: #ffffff;
-            border: 1px solid #ddd;
+            border: 1px solid #dbe2ea;
+            border-radius: 12px;
             padding: 10px;
             overflow-x: auto;
-            max-height: 600px;
+            max-height: 620px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
         }
 
         table {
@@ -116,21 +310,21 @@
         }
 
         th, td {
-            border: 1px solid #dcdcdc;
+            border: 1px solid #e5eaf0;
             padding: 8px;
             text-align: left;
             font-size: 14px;
         }
 
         th {
-            background: #efefef;
+            background: #eff4fa;
             position: sticky;
             top: 0;
             z-index: 1;
         }
 
         tr:nth-child(even) {
-            background: #fafafa;
+            background: #fafcff;
         }
 
         tr.selected-row {
@@ -145,53 +339,15 @@
             margin-top: 15px;
         }
 
-        .actions button {
-            padding: 8px 14px;
-            margin-right: 10px;
-        }
+        @media (max-width: 1200px) {
+            .filter-grid,
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
 
-        .small {
-            font-size: 12px;
-            color: #666;
-        }
-
-        #status {
-            margin-top: 10px;
-            color: #444;
-            font-size: 13px;
-        }
-
-        .disabled-field {
-            background: #f0f0f0;
-            color: #666;
-        }
-
-        .legend {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #555;
-        }
-
-        .legend span {
-            display: inline-block;
-            margin-right: 15px;
-        }
-
-        .legend-box {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            margin-right: 5px;
-            vertical-align: middle;
-            border: 1px solid #ccc;
-        }
-
-        .legend-selected {
-            background: #fff7d6;
-        }
-
-        .legend-outside {
-            background: #ffe9b3;
+            .side-card {
+                order: 3;
+            }
         }
     </style>
 </head>
@@ -208,88 +364,128 @@
     </div>
 
     <form method="POST" action="/export" id="exportForm">
-        <div class="toolbar">
-            <div>
-                <label for="periodPreset">Periodo</label>
-                <select id="periodPreset" name="periodPreset">
-                    <option value="current_month">Mese attuale</option>
-                    <option value="last_month">Ultimo mese</option>
-                    <option value="current_year">Anno attuale</option>
-                    <option value="last_year">Ultimo anno</option>
-                    <option value="custom">Custom</option>
-                </select>
+        <div class="topbar">
+            <div class="topbar-row">
+                <div class="field-group">
+                    <label for="periodPreset">Periodo</label>
+                    <select id="periodPreset" name="periodPreset">
+                        <option value="current_month">Mese attuale</option>
+                        <option value="last_month">Ultimo mese</option>
+                        <option value="current_year">Anno attuale</option>
+                        <option value="last_year">Ultimo anno</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
 
-                <label for="date_from">Data inizio</label>
-                <input type="datetime-local" id="date_from" name="date_from" required>
+                <div class="field-group">
+                    <label for="date_from">Data inizio</label>
+                    <input type="datetime-local" id="date_from" name="date_from" required>
+                </div>
 
-                <label for="date_to">Data fine</label>
-                <input type="datetime-local" id="date_to" name="date_to" required>
+                <div class="field-group">
+                    <label for="date_to">Data fine</label>
+                    <input type="datetime-local" id="date_to" name="date_to" required>
+                </div>
 
-                <label for="resolution">Aggregazione</label>
-                <select id="resolution" name="resolution">
-                    <option value="15m">15 minuti</option>
-                    <option value="hour">Oraria</option>
-                    <option value="day">Giornaliera</option>
-                    <option value="month">Mensile</option>
-                </select>
+                <div class="field-group">
+                    <label for="resolution">Aggregazione</label>
+                    <select id="resolution" name="resolution">
+                        <option value="15m">15 minuti</option>
+                        <option value="hour">Oraria</option>
+                        <option value="day">Giornaliera</option>
+                        <option value="month">Mensile</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="filter-blocks">
-                <div class="checklist-block">
-                    <label for="targetSearch">Cerca Target</label>
-                    <input type="text" id="targetSearch" class="checklist-search" placeholder="Scrivi uno o più target...">
-
-                    <label>Target</label>
+            <div class="filter-grid">
+                <div class="filter-card">
+                    <h3>Target</h3>
+                    <input type="text" id="targetSearch" class="search-box" placeholder="Cerca uno o più target...">
                     <div id="targetChecklist" class="checklist-box"></div>
-
                     <div class="checklist-actions">
-                        <button type="button" onclick="selectAllVisibleChecklist('targetChecklist')">Seleziona target visibili</button>
-                        <button type="button" onclick="clearAllChecklist('targetChecklist')">Azzera target</button>
+                        <button type="button" onclick="selectAllVisibleChecklist('targetChecklist')">Seleziona visibili</button>
+                        <button type="button" onclick="clearAllChecklist('targetChecklist')">Azzera</button>
                     </div>
                 </div>
 
-                <div class="checklist-block">
-                    <label for="resourceSearch">Cerca Resource</label>
-                    <input type="text" id="resourceSearch" class="checklist-search" placeholder="Scrivi una o più resource...">
-
-                    <label>Resource</label>
+                <div class="filter-card">
+                    <h3>Resource</h3>
+                    <input type="text" id="resourceSearch" class="search-box" placeholder="Cerca una o più resource...">
                     <div id="resourceChecklist" class="checklist-box"></div>
-
                     <div class="checklist-actions">
-                        <button type="button" onclick="selectAllVisibleChecklist('resourceChecklist')">Seleziona resource visibili</button>
-                        <button type="button" onclick="clearAllChecklist('resourceChecklist')">Azzera resource</button>
+                        <button type="button" onclick="selectAllVisibleChecklist('resourceChecklist')">Seleziona visibili</button>
+                        <button type="button" onclick="clearAllChecklist('resourceChecklist')">Azzera</button>
                     </div>
                 </div>
 
-                <div class="free-filter-block">
-                    <label for="filterInput">Filtro libero</label>
-                    <input type="text" id="filterInput" placeholder="Scrivi per filtrare..." style="width:300px;">
+                <div class="side-card">
+                    <div>
+                        <h3>Azioni rapide</h3>
+                    </div>
 
-                    <div style="margin-top:12px;">
+                    <div class="field-group">
+                        <label for="filterInput">Filtro libero</label>
+                        <input type="text" id="filterInput" placeholder="Scrivi per filtrare...">
+                    </div>
+
+                    <div class="btn-row">
                         <button type="button" onclick="selectAllRows()">Seleziona tutto</button>
                         <button type="button" onclick="deselectAllRows()">Deseleziona tutto</button>
+                    </div>
+
+                    <div class="btn-row">
                         <button type="button" onclick="selectFilteredRows()">Seleziona filtrati</button>
                         <button type="button" onclick="deselectFilteredRows()">Deseleziona filtrati</button>
                     </div>
                 </div>
             </div>
 
-            <div style="margin-top:10px;">
-                <label for="savedSelectionName">Nome selezione</label>
-                <input type="text" id="savedSelectionName" placeholder="Es. Cabina Savona">
+            <div class="save-row">
+                <div class="field-group">
+                    <label for="savedSelectionName">Nome selezione</label>
+                    <input type="text" id="savedSelectionName" placeholder="Es. Cabina Savona">
+                </div>
 
-                <button type="button" onclick="saveCurrentSelection()">Salva selezione</button>
+                <div class="field-group">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn-primary" onclick="saveCurrentSelection()">Salva selezione</button>
+                </div>
 
-                <label for="savedSelections">Selezioni salvate</label>
-                <select id="savedSelections">
-                    <option value="">Seleziona...</option>
-                </select>
+                <div class="field-group">
+                    <label for="savedSelections">Selezioni salvate</label>
+                    <select id="savedSelections">
+                        <option value="">Seleziona...</option>
+                    </select>
+                </div>
 
-                <button type="button" onclick="loadSavedSelection()">Carica</button>
-                <button type="button" onclick="deleteSavedSelection()">Elimina</button>
+                <div class="field-group">
+                    <label>&nbsp;</label>
+                    <div class="btn-row">
+                        <button type="button" onclick="loadSavedSelection()">Carica</button>
+                        <button type="button" onclick="deleteSavedSelection()">Elimina</button>
+                    </div>
+                </div>
             </div>
 
-            <div id="status" class="small"></div>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h4>Target selezionati</h4>
+                    <div id="selectedTargetsSummary" class="summary-box"></div>
+                </div>
+
+                <div class="summary-card">
+                    <h4>Resource selezionate</h4>
+                    <div id="selectedResourcesSummary" class="summary-box"></div>
+                </div>
+
+                <div class="summary-card">
+                    <h4>Grandezze selezionate per export</h4>
+                    <div id="selectedMeasuresSummary" class="summary-box"></div>
+                </div>
+            </div>
+
+            <div id="status"></div>
             <div class="legend">
                 <span><span class="legend-box legend-selected"></span>Selezionata</span>
                 <span><span class="legend-box legend-outside"></span>Selezionata fuori filtro</span>
@@ -312,7 +508,7 @@
         </div>
 
         <div class="actions">
-            <button type="submit">Esporta Excel</button>
+            <button type="submit" class="btn-primary">Esporta Excel</button>
         </div>
     </form>
 
@@ -321,6 +517,31 @@
         let filteredData = [];
         let debounceTimer = null;
         let selectedKeys = {};
+        let allTargets = [];
+        let allResources = [];
+        let targetToResourcesMap = {};
+
+        function normalizeText(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .toLowerCase()
+                .replace(/[_\\s\\-\\/]+/g, '');
+        }
+
+        function uniqueNormalizedValues(values) {
+            const seen = new Set();
+            const result = [];
+
+            values.forEach(v => {
+                const key = normalizeText(v);
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    result.push(v);
+                }
+            });
+
+            return result;
+        }
 
         async function loadRows() {
             const status = document.getElementById('status');
@@ -350,8 +571,27 @@
                     };
                 });
 
-                renderChecklist('targetChecklist', [...new Set(allData.map(row => row.target))].sort(), 'target');
-                renderChecklist('resourceChecklist', [...new Set(allData.map(row => row.resource))].sort(), 'resource');
+                allTargets = uniqueNormalizedValues(allData.map(row => row.target))
+                    .sort((a, b) => a.localeCompare(b));
+
+                targetToResourcesMap = {};
+                allData.forEach(row => {
+                    if (!targetToResourcesMap[row.target]) {
+                        targetToResourcesMap[row.target] = [];
+                    }
+                    targetToResourcesMap[row.target].push(row.resource);
+                });
+
+                Object.keys(targetToResourcesMap).forEach(target => {
+                    targetToResourcesMap[target] = uniqueNormalizedValues(targetToResourcesMap[target])
+                        .sort((a, b) => a.localeCompare(b));
+                });
+
+                allResources = uniqueNormalizedValues(allData.map(row => row.resource))
+                    .sort((a, b) => a.localeCompare(b));
+
+                renderChecklist('targetChecklist', allTargets, 'target');
+                renderResourceChecklist();
 
                 await refreshSavedSelectionsDropdown();
                 applyFilters();
@@ -362,15 +602,18 @@
             }
         }
 
-        function renderChecklist(containerId, items, type) {
+        function renderChecklist(containerId, items, type, checkedValues) {
             const container = document.getElementById(containerId);
+            const checked = checkedValues || [];
             let html = '';
 
             items.forEach(item => {
+                const isChecked = checked.includes(item.toLowerCase()) ? 'checked' : '';
                 const itemEscaped = escapeHtml(item);
+
                 html += `
                     <label class="checklist-item" data-value="${itemEscaped}">
-                        <input type="checkbox" data-type="${type}" value="${itemEscaped}">
+                        <input type="checkbox" data-type="${type}" value="${itemEscaped}" ${isChecked}>
                         ${itemEscaped}
                     </label>
                 `;
@@ -385,6 +628,44 @@
                 .map(cb => cb.value.toLowerCase());
         }
 
+        function setCheckedChecklistValues(containerId, values) {
+            const wanted = (values || []).map(v => v.toLowerCase());
+            const container = document.getElementById(containerId);
+
+            Array.from(container.querySelectorAll('input[type="checkbox"]')).forEach(cb => {
+                cb.checked = wanted.includes(cb.value.toLowerCase());
+            });
+        }
+
+        function renderResourceChecklist(preservedResources) {
+            const selectedTargets = getCheckedChecklistValues('targetChecklist');
+            const currentSelectedResources = preservedResources || getCheckedChecklistValues('resourceChecklist');
+
+            let resourcesToShow = [];
+
+            if (selectedTargets.length === 0) {
+                resourcesToShow = allResources.slice();
+            } else {
+                let collected = [];
+                allTargets.forEach(target => {
+                    if (selectedTargets.includes(target.toLowerCase())) {
+                        const resources = targetToResourcesMap[target] || [];
+                        collected = collected.concat(resources);
+                    }
+                });
+
+                resourcesToShow = uniqueNormalizedValues(collected)
+                    .sort((a, b) => a.localeCompare(b));
+            }
+
+            const validSelectedResources = currentSelectedResources.filter(r =>
+                resourcesToShow.map(x => x.toLowerCase()).includes(r)
+            );
+
+            renderChecklist('resourceChecklist', resourcesToShow, 'resource', validSelectedResources);
+            filterChecklist('resourceChecklist', 'resourceSearch');
+        }
+
         function selectAllVisibleChecklist(containerId) {
             const container = document.getElementById(containerId);
             Array.from(container.querySelectorAll('.checklist-item')).forEach(label => {
@@ -393,6 +674,11 @@
                     if (cb) cb.checked = true;
                 }
             });
+
+            if (containerId === 'targetChecklist') {
+                renderResourceChecklist();
+            }
+
             applyFilters();
         }
 
@@ -401,6 +687,11 @@
             Array.from(container.querySelectorAll('input[type="checkbox"]')).forEach(cb => {
                 cb.checked = false;
             });
+
+            if (containerId === 'targetChecklist') {
+                renderResourceChecklist();
+            }
+
             applyFilters();
         }
 
@@ -410,7 +701,7 @@
 
             const terms = rawInput
                 .toLowerCase()
-                .split(/[\s,;]+/)
+                .split(/[\\s,;]+/)
                 .map(t => normalizeText(t))
                 .filter(t => t.length > 0);
 
@@ -431,20 +722,12 @@
                 .replace(/'/g, '&#039;');
         }
 
-        function normalizeText(text) {
-            if (text === null || text === undefined) return '';
-            return String(text)
-                .toLowerCase()
-                .replace(/[_\s\-\/]+/g, '');
-        }
-
         function formatDateTimeLocal(dateObj) {
             const year = dateObj.getFullYear();
             const month = String(dateObj.getMonth() + 1).padStart(2, '0');
             const day = String(dateObj.getDate()).padStart(2, '0');
             const hours = String(dateObj.getHours()).padStart(2, '0');
             const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-
             return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
@@ -496,7 +779,6 @@
 
         function syncHiddenSelectedRows() {
             const form = document.getElementById('exportForm');
-
             const oldHidden = form.querySelectorAll('input[data-hidden-selected="1"]');
             oldHidden.forEach(el => el.remove());
 
@@ -530,6 +812,46 @@
                 opt.textContent = item.name;
                 dropdown.appendChild(opt);
             });
+        }
+
+        function renderSimpleList(containerId, items, emptyText) {
+            const container = document.getElementById(containerId);
+
+            if (!items || items.length === 0) {
+                container.innerHTML = `<div class="empty-note">${escapeHtml(emptyText)}</div>`;
+                return;
+            }
+
+            container.innerHTML = items.map(item =>
+                `<div class="summary-item">${escapeHtml(item)}</div>`
+            ).join('');
+        }
+
+        function updateSelectionSummaries() {
+            const selectedTargets = getCheckedChecklistValues('targetChecklist');
+            const selectedResources = getCheckedChecklistValues('resourceChecklist');
+
+            const targetLabels = uniqueNormalizedValues(
+                allTargets.filter(t => selectedTargets.includes(t.toLowerCase()))
+            );
+
+            const resourceLabels = uniqueNormalizedValues(
+                allResources.filter(r => selectedResources.includes(r.toLowerCase()))
+            );
+
+            const selectedMeasures = uniqueNormalizedValues(
+                Object.keys(selectedKeys)
+                    .filter(k => selectedKeys[k])
+                    .map(k => {
+                        const row = allData.find(x => x.key === k);
+                        return row ? `${row.target} / ${row.resource}${row.um ? ' (' + row.um + ')' : ''}` : k;
+                    })
+                    .sort()
+            );
+
+            renderSimpleList('selectedTargetsSummary', targetLabels, 'Nessun target selezionato');
+            renderSimpleList('selectedResourcesSummary', resourceLabels, 'Nessuna resource selezionata');
+            renderSimpleList('selectedMeasuresSummary', selectedMeasures, 'Nessuna grandezza selezionata');
         }
 
         async function saveCurrentSelection() {
@@ -585,7 +907,23 @@
                 selectedKeys[k] = true;
             });
 
+            const targetSet = new Set();
+            const resourceSet = new Set();
+
+            (item.keys || []).forEach(k => {
+                const row = allData.find(x => x.key === k);
+                if (row) {
+                    targetSet.add(row.target.toLowerCase());
+                    resourceSet.add(row.resource.toLowerCase());
+                }
+            });
+
+            setCheckedChecklistValues('targetChecklist', Array.from(targetSet));
+            renderResourceChecklist(Array.from(resourceSet));
+            setCheckedChecklistValues('resourceChecklist', Array.from(resourceSet));
+
             applyFilters();
+            updateSelectionSummaries();
         }
 
         async function deleteSavedSelection() {
@@ -617,7 +955,6 @@
                 const matchTarget = selectedTargets.length === 0 || selectedTargets.includes(row.target.toLowerCase());
                 const matchResource = selectedResources.length === 0 || selectedResources.includes(row.resource.toLowerCase());
                 const matchText = !textFilter || row.searchText.includes(textFilter);
-
                 const selected = !!selectedKeys[row.key];
 
                 return (matchTarget && matchResource && matchText) || selected;
@@ -628,6 +965,8 @@
                 selectedResources: selectedResources,
                 textFilter: textFilter
             });
+
+            updateSelectionSummaries();
         }
 
         function rowMatchesCurrentFilter(row, filters) {
@@ -758,6 +1097,7 @@
 
             document.getElementById('targetChecklist').addEventListener('change', function(e) {
                 if (e.target && e.target.type === 'checkbox') {
+                    renderResourceChecklist();
                     applyFilters();
                 }
             });
