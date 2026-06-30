@@ -170,7 +170,7 @@ def build_excel_bytes(selected_rows, date_from_str, date_to_str, resolution="15m
 
         series_map = {}
         for ts, value in rows:
-            series_map[int(ts)] = None if value is None else round(float(value), 2)
+            series_map[int(ts)] = None if value is None else round(float(value), 3)
 
         if series_map:
             all_timestamps.update(series_map.keys())

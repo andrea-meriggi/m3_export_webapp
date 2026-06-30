@@ -1,0 +1,17 @@
+{
+  "name": "Piano -1",
+  "keys": [
+    "Piano_-1_Area_Break_1_IAQ|Co2",
+    "Piano_-1_Area_Break_1_IAQ|Humidity",
+    "Piano_-1_Area_Break_1_IAQ|PM25",
+    "Piano_-1_Area_Break_1_IAQ|Sound",
+    "Piano_-1_Area_Break_1_IAQ|Temperature",
+    "Piano_-1_Area_Break_1_IAQ|VOC",
+    "Piano_-1_Area_Break_2_IAQ|Co2",
+    "Piano_-1_Area_Break_2_IAQ|Humidity",
+    "Piano_-1_Area_Break_2_IAQ|PM25",
+    "Piano_-1_Area_Break_2_IAQ|Sound",
+    "Piano_-1_Area_Break_2_IAQ|Temperature",
+    "Piano_-1_Area_Break_2_IAQ|VOC"
+  ]
+}

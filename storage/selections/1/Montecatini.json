@@ -1,0 +1,32 @@
+{
+  "name": "Montecatini",
+  "keys": [
+    "MontecatiniTerme_Contatore_Acqua|Contatore",
+    "MontecatiniTerme_L1_Generale_P1|Cosphi",
+    "MontecatiniTerme_L1_Generale_P1|Energia_Attiva",
+    "MontecatiniTerme_L1_Generale_P1|Energia_Reattiva",
+    "MontecatiniTerme_L1_Generale_P1|Potenza_Attiva",
+    "MontecatiniTerme_L1_Gen_Quadro_PT_Q_PT|Cosphi",
+    "MontecatiniTerme_L1_Gen_Quadro_PT_Q_PT|Energia_Attiva",
+    "MontecatiniTerme_L1_Gen_Quadro_PT_Q_PT|Energia_Reattiva",
+    "MontecatiniTerme_L1_Gen_Quadro_PT_Q_PT|Potenza_Attiva",
+    "MontecatiniTerme_L2_Gen_Centrale_Idrica|Cosphi",
+    "MontecatiniTerme_L2_Gen_Centrale_Idrica|Energia_Attiva",
+    "MontecatiniTerme_L2_Gen_Centrale_Idrica|Energia_Reattiva",
+    "MontecatiniTerme_L2_Gen_Centrale_Idrica|Potenza_Attiva",
+    "MontecatiniTerme_L2_Gen_Ill_P1|Energia_Attiva",
+    "MontecatiniTerme_L2_Gen_Ill_P1|Potenza_Attiva",
+    "MontecatiniTerme_L2_Gen_Quadro_CDZ|Cosphi",
+    "MontecatiniTerme_L2_Gen_Quadro_CDZ|Energia_Attiva",
+    "MontecatiniTerme_L2_Gen_Quadro_CDZ|Energia_Reattiva",
+    "MontecatiniTerme_L2_Gen_Quadro_CDZ|Potenza_Attiva",
+    "MontecatiniTerme_L2_Gen_UPS|Energia_Attiva",
+    "MontecatiniTerme_L2_Gen_UPS|Potenza_Attiva",
+    "MontecatiniTerme_L3_CDZ_P1_2|Energia_Attiva",
+    "MontecatiniTerme_L3_CDZ_P1_2|Potenza_Attiva",
+    "MontecatiniTerme_L3_CDZ_PT_1|Energia_Attiva",
+    "MontecatiniTerme_L3_CDZ_PT_1|Potenza_Attiva",
+    "MontecatiniTerme_L3_CDZ_PT_2|Energia_Attiva",
+    "MontecatiniTerme_L3_CDZ_PT_2|Potenza_Attiva"
+  ]
+}

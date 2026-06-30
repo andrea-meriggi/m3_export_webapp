@@ -1,0 +1,20 @@
+{
+  "name": "Savona",
+  "keys": [
+    "Savona_FV|Energia_Attiva",
+    "Savona_L1_Gen_Generale_Edificio|Corrente_L1",
+    "Savona_L1_Gen_Generale_Edificio|Corrente_L3",
+    "Savona_L1_Gen_Generale_Edificio|Corrente_L2",
+    "Savona_L1_Gen_Generale_Edificio|Cosphi",
+    "Savona_L1_Gen_Generale_Edificio|Energia_Attiva",
+    "Savona_L1_Gen_Generale_Edificio|Energia_Reattiva",
+    "Savona_L1_Gen_Generale_Edificio|Potenza_Attiva",
+    "Savona_L1_Gen_Generale_Edificio|Tensione",
+    "Savona_L2_Gen_CED|Energia_Attiva",
+    "Savona_L2_QE_CDZ|Energia_Attiva",
+    "Savona_L2_QE_Centrale_Termofrigorifera|Energia_Attiva",
+    "Savona_L2_QE_P1_Palazzina_Uffici|Energia_Attiva",
+    "Savona_L2_QE_PT_Palazzina_Uffici|Energia_Attiva",
+    "Savona_Contatore_Acqua|Contatore"
+  ]
+}

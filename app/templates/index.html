@@ -58,6 +58,7 @@
 
         input[type="text"],
         input[type="datetime-local"],
+        input[type="time"],
         select,
         button {
             font-size: 14px;
@@ -65,6 +66,7 @@
 
         input[type="text"],
         input[type="datetime-local"],
+        input[type="time"],
         select {
             padding: 9px 10px;
             border: 1px solid #cfd8e3;
@@ -76,6 +78,7 @@
 
         input[type="text"]:focus,
         input[type="datetime-local"]:focus,
+        input[type="time"]:focus,
         select:focus {
             outline: none;
             border-color: #5b8def;
@@ -339,6 +342,11 @@
             margin-top: 15px;
         }
 
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 1200px) {
             .filter-grid,
             .summary-grid {
@@ -508,9 +516,17 @@
         </div>
 
         <div class="actions">
-            <button type="submit" class="btn-primary">Esporta Excel</button>
+            <button type="button" class="btn-primary" onclick="downloadExcel()">Esporta Excel</button>
         </div>
     </form>
+
+    <div id="downloadOverlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.35); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:24px 28px; border-radius:14px; min-width:320px; box-shadow:0 10px 30px rgba(0,0,0,0.18); text-align:center;">
+            <div style="width:42px; height:42px; margin:0 auto 14px auto; border:4px solid #dbeafe; border-top:4px solid #2157d5; border-radius:50%; animation:spin 0.9s linear infinite;"></div>
+            <div style="font-size:16px; font-weight:700; color:#1f2937; margin-bottom:6px;">Download in corso</div>
+            <div style="font-size:13px; color:#6b7280;">Sto preparando il file Excel, attendi qualche secondo...</div>
+        </div>
+    </div>
 
     <script>
         let allData = [];
@@ -525,7 +541,7 @@
             if (text === null || text === undefined) return '';
             return String(text)
                 .toLowerCase()
-                .replace(/[_\\s\\-\\/]+/g, '');
+                .replace(/[_\s\-\/]+/g, '');
         }
 
         function uniqueNormalizedValues(values) {
@@ -701,7 +717,7 @@
 
             const terms = rawInput
                 .toLowerCase()
-                .split(/[\\s,;]+/)
+                .split(/[\s,;]+/)
                 .map(t => normalizeText(t))
                 .filter(t => t.length > 0);
 
@@ -792,6 +808,64 @@
                     form.appendChild(input);
                 }
             });
+        }
+
+        function showDownloadOverlay() {
+            document.getElementById('downloadOverlay').style.display = 'flex';
+        }
+
+        function hideDownloadOverlay() {
+            document.getElementById('downloadOverlay').style.display = 'none';
+        }
+
+        async function downloadExcel() {
+            try {
+                enableDatesBeforeSubmit();
+                syncHiddenSelectedRows();
+
+                const form = document.getElementById('exportForm');
+                const formData = new FormData(form);
+
+                showDownloadOverlay();
+
+                const response = await fetch('/export', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    hideDownloadOverlay();
+                    alert(errorText || 'Errore durante la generazione del file');
+                    return;
+                }
+
+                const blob = await response.blob();
+
+                let filename = 'export.xlsx';
+                const disposition = response.headers.get('Content-Disposition');
+                if (disposition) {
+                    const match = disposition.match(/filename="?([^"]+)"?/);
+                    if (match && match[1]) {
+                        filename = match[1];
+                    }
+                }
+
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+                hideDownloadOverlay();
+            } catch (error) {
+                hideDownloadOverlay();
+                alert('Errore durante il download del file');
+                console.error(error);
+            }
         }
 
         async function fetchSavedSelections() {
@@ -1114,11 +1188,6 @@
             });
 
             document.getElementById('periodPreset').addEventListener('change', setDateRangeByPreset);
-
-            document.getElementById('exportForm').addEventListener('submit', function() {
-                enableDatesBeforeSubmit();
-                syncHiddenSelectedRows();
-            });
         }
 
         window.onload = async function() {
